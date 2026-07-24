@@ -12,23 +12,24 @@ from datetime import datetime, timedelta, timezone
 import caldav
 
 CALDAV_URL = "https://caldav.icloud.com/"
+DEFAULT_LIST_NAME = "workout-plan"
 
 
-def find_reminders_list(principal: caldav.Principal) -> caldav.Calendar:
+def find_reminders_list(principal: caldav.Principal, list_name: str) -> caldav.Calendar:
     print("--- 账号里所有日历/列表 ---")
-    candidates = []
+    all_names = []
     for calendar in principal.calendars():
         supported = set(calendar.get_supported_components())
-        print(f"名字: {calendar.get_display_name()!r}, 支持类型: {supported}")
-        if supported == {"VTODO"}:
-            candidates.append(calendar)
+        name = calendar.get_display_name()
+        print(f"名字: {name!r}, 支持类型: {supported}")
+        all_names.append(name)
+        if name == list_name and supported == {"VTODO"}:
+            return calendar
 
-    if not candidates:
-        raise RuntimeError("没有找到「只支持 VTODO」的纯提醒事项列表（可能都是日历，兼带 VTODO）")
-    if len(candidates) > 1:
-        names = [c.get_display_name() for c in candidates]
-        print(f"警告：找到多个候选列表 {names}，先用第一个")
-    return candidates[0]
+    raise RuntimeError(
+        f"没有找到名字精确匹配 {list_name!r} 且只支持 VTODO 的列表。"
+        f"账号里现有列表: {all_names}"
+    )
 
 
 def create_test_reminder(reminders_list: caldav.Calendar) -> str:
@@ -43,11 +44,12 @@ def create_test_reminder(reminders_list: caldav.Calendar) -> str:
 def main() -> None:
     apple_id = os.environ["APPLE_ID"]
     app_password = os.environ["APPLE_APP_PASSWORD"]
+    list_name = os.environ.get("REMINDERS_LIST_NAME", DEFAULT_LIST_NAME)
 
     client = caldav.DAVClient(url=CALDAV_URL, username=apple_id, password=app_password)
     principal = client.principal()
 
-    reminders_list = find_reminders_list(principal)
+    reminders_list = find_reminders_list(principal, list_name)
     print(f"找到提醒事项列表: {reminders_list.get_display_name()}")
 
     new_uid = create_test_reminder(reminders_list)
