@@ -44,6 +44,7 @@ struct ContentView: View {
             .onAppear {
                 githubToken = KeychainStore.shared.read(key: "github_token") ?? ""
                 tokenSaved = !githubToken.isEmpty
+                healthKitManager.registerBackgroundObservers()
             }
         }
     }
