@@ -22,12 +22,13 @@ def find_reminders_list(principal: caldav.Principal) -> caldav.Calendar:
     raise RuntimeError("没有找到支持 VTODO（提醒事项）的列表")
 
 
-def create_test_reminder(reminders_list: caldav.Calendar) -> None:
+def create_test_reminder(reminders_list: caldav.Calendar) -> str:
     due = datetime.now(timezone.utc) + timedelta(hours=1)
-    reminders_list.save_todo(
+    todo = reminders_list.save_todo(
         summary="HealthExporter Reminders 集成测试",
         due=due,
     )
+    return todo.id
 
 
 def main() -> None:
@@ -38,10 +39,17 @@ def main() -> None:
     principal = client.principal()
 
     reminders_list = find_reminders_list(principal)
-    print(f"找到提醒事项列表: {reminders_list.name}")
+    print(f"找到提醒事项列表: {reminders_list.get_display_name()}")
 
-    create_test_reminder(reminders_list)
-    print("测试提醒事项创建成功")
+    new_uid = create_test_reminder(reminders_list)
+    print(f"测试提醒事项创建成功, uid={new_uid}")
+
+    print("--- 回头查一次这个列表里的所有待办 ---")
+    all_todos = reminders_list.todos(include_completed=True)
+    print(f"这个列表里现在一共有 {len(all_todos)} 条待办")
+    for todo in all_todos:
+        print("=" * 40)
+        print(todo.data)
 
 
 if __name__ == "__main__":
