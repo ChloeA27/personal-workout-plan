@@ -2,6 +2,11 @@ name: Reminders Sync
 
 on:
   workflow_dispatch:
+    inputs:
+      list_name:
+        description: "目标提醒事项列表名字（调试用，留空则用脚本默认值 workout-plan）"
+        required: false
+        default: ""
   # 先手动触发验证，等训练计划内容接进来之后再打开下面这个定时任务
   # schedule:
   #   - cron: "0 13 * * *"
@@ -23,4 +28,5 @@ jobs:
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          REMINDERS_LIST_NAME: ${{ inputs.list_name }}
         run: python scripts/reminders_sync.py

@@ -55,7 +55,7 @@ def create_test_reminder(reminders_list: caldav.Calendar) -> str:
 def main() -> None:
     apple_id = os.environ["APPLE_ID"]
     app_password = os.environ["APPLE_APP_PASSWORD"]
-    list_name = os.environ.get("REMINDERS_LIST_NAME", DEFAULT_LIST_NAME)
+    list_name = os.environ.get("REMINDERS_LIST_NAME") or DEFAULT_LIST_NAME
 
     client = caldav.DAVClient(url=CALDAV_URL, username=apple_id, password=app_password)
     principal = client.principal()
