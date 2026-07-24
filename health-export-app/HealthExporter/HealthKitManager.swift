@@ -60,8 +60,16 @@ final class HealthKitManager: ObservableObject {
         }
     }
 
+    private var isSyncing = false
+    private var syncQueued = false
+
     /// 手动或自动触发：采集今天的数据并上传
     func syncToday() async {
+        if isSyncing {
+            syncQueued = true
+            return
+        }
+        isSyncing = true
         let summary = await collectDailySummary(for: Date())
         do {
             try await GitHubUploader.shared.upload(summary: summary)
@@ -69,6 +77,11 @@ final class HealthKitManager: ObservableObject {
             lastSyncStatus = "同步成功 \(summary.date)"
         } catch {
             lastSyncStatus = "上传失败: \(error.localizedDescription)"
+        }
+        isSyncing = false
+        if syncQueued {
+            syncQueued = false
+            await syncToday()
         }
     }
 

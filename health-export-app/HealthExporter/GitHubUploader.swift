@@ -54,10 +54,26 @@ final class GitHubUploader {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+        if statusCode == 409 {
+            guard let freshSHA = try await fetchExistingSHA(path: path, token: token) else {
+                throw GitHubUploaderError.badResponse(statusCode, "409 且拿不到最新 SHA")
+            }
+            var retryBody = body
+            retryBody["sha"] = freshSHA
+            var retryRequest = request
+            retryRequest.httpBody = try JSONSerialization.data(withJSONObject: retryBody)
+            let (retryData, retryResponse) = try await URLSession.shared.data(for: retryRequest)
+            guard let retryHTTP = retryResponse as? HTTPURLResponse, (200...299).contains(retryHTTP.statusCode) else {
+                let code = (retryResponse as? HTTPURLResponse)?.statusCode ?? -1
+                let bodyText = String(data: retryData, encoding: .utf8) ?? ""
+                throw GitHubUploaderError.badResponse(code, bodyText)
+            }
+            return
+        }
+        guard (200...299).contains(statusCode) else {
             let bodyText = String(data: data, encoding: .utf8) ?? ""
-            throw GitHubUploaderError.badResponse(code, bodyText)
+            throw GitHubUploaderError.badResponse(statusCode, bodyText)
         }
     }
 
