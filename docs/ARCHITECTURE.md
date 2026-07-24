@@ -13,27 +13,27 @@ flowchart LR
         Plan[训练计划内容]
         Workflow[GitHub Actions 定时任务]
     end
-    subgraph Cloud [Apple 云端]
-        CalDAV[iCloud CalDAV]
+    subgraph Cloud [Google 云端]
+        GTasks[Google Tasks API]
     end
-    Reminders[iPhone Reminders]
+    GTApp[手机 Google Tasks / Google Calendar]
 
     HK -->|HealthKit 后台监听| App
     App -->|GitHub Contents API| Data
     Data -->|读取恢复/训练量数据| Plan
     Plan --> Workflow
-    Workflow -->|CalDAV 协议写入| CalDAV
-    CalDAV --> Reminders
+    Workflow -->|官方 API 写入| GTasks
+    GTasks --> GTApp
 ```
 
 ## 两条线
 
-| | Health 数据采集 | Reminders 自动化 |
+| | Health 数据采集 | 待办自动化 |
 |---|---|---|
-| 状态 | 已上线（见 [health-export/DESIGN.md](./health-export/DESIGN.md)） | 规划中（见 [reminders-sync/PLAN.md](./reminders-sync/PLAN.md)） |
+| 状态 | 已上线（见 [health-export/DESIGN.md](./health-export/DESIGN.md)） | Google Tasks 方案验证中（见 [reminders-sync/PLAN.md](./reminders-sync/PLAN.md)），iCloud CalDAV 方案已放弃 |
 | 运行位置 | 用户 iPhone 本地 App | GitHub Actions（云端定时任务） |
-| 数据流向 | Health → 仓库 | 仓库 → iCloud → 手机 Reminders |
-| 认证方式 | GitHub Fine-grained PAT（存 iOS Keychain） | Apple ID App 专用密码（存 GitHub Actions Secrets） |
+| 数据流向 | Health → 仓库 | 仓库 → Google Tasks → 手机 |
+| 认证方式 | GitHub Fine-grained PAT（存 iOS Keychain） | Google OAuth refresh token（存 GitHub Actions Secrets） |
 
 ## 分支结构说明
 
