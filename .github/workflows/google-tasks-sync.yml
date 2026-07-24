@@ -1,0 +1,33 @@
+name: Google Tasks Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      list_name:
+        description: "目标任务列表名字（调试用，留空则用脚本默认值 健身计划）"
+        required: false
+        default: ""
+  # 先手动触发验证，等训练计划内容接进来之后再打开下面这个定时任务
+  # schedule:
+  #   - cron: "0 13 * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Sync to Google Tasks
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          GOOGLE_TASKLIST_NAME: ${{ inputs.list_name }}
+        run: python scripts/google_tasks_sync.py
