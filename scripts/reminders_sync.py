@@ -15,11 +15,20 @@ CALDAV_URL = "https://caldav.icloud.com/"
 
 
 def find_reminders_list(principal: caldav.Principal) -> caldav.Calendar:
+    print("--- 账号里所有日历/列表 ---")
+    candidates = []
     for calendar in principal.calendars():
-        supported = calendar.get_supported_components()
-        if "VTODO" in supported:
-            return calendar
-    raise RuntimeError("没有找到支持 VTODO（提醒事项）的列表")
+        supported = set(calendar.get_supported_components())
+        print(f"名字: {calendar.get_display_name()!r}, 支持类型: {supported}")
+        if supported == {"VTODO"}:
+            candidates.append(calendar)
+
+    if not candidates:
+        raise RuntimeError("没有找到「只支持 VTODO」的纯提醒事项列表（可能都是日历，兼带 VTODO）")
+    if len(candidates) > 1:
+        names = [c.get_display_name() for c in candidates]
+        print(f"警告：找到多个候选列表 {names}，先用第一个")
+    return candidates[0]
 
 
 def create_test_reminder(reminders_list: caldav.Calendar) -> str:
