@@ -7,28 +7,39 @@
 
 import os
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 
 import caldav
 
 CALDAV_URL = "https://caldav.icloud.com/"
 DEFAULT_LIST_NAME = "workout-plan"
+DISCOVERY_ATTEMPTS = 6
+DISCOVERY_RETRY_SECONDS = 8
 
 
 def find_reminders_list(principal: caldav.Principal, list_name: str) -> caldav.Calendar:
-    print("--- 账号里所有日历/列表 ---")
-    all_names = []
-    for calendar in principal.calendars():
-        supported = set(calendar.get_supported_components())
-        name = calendar.get_display_name()
-        print(f"名字: {name!r}, 支持类型: {supported}")
-        all_names.append(name)
-        if name == list_name and supported == {"VTODO"}:
-            return calendar
+    """iCloud 的 CalDAV 日历枚举偶尔会漏掉一部分（同一账号连续两次请求
+    结果都不完整、缺的东西还不一样），所以在一次运行里多试几次，而不是
+    只信一次 principal.calendars() 的结果。"""
+    all_names: list[str] = []
+    for attempt in range(1, DISCOVERY_ATTEMPTS + 1):
+        print(f"--- 第 {attempt} 次尝试列出账号里所有日历/列表 ---")
+        all_names = []
+        for calendar in principal.calendars():
+            supported = set(calendar.get_supported_components())
+            name = calendar.get_display_name()
+            print(f"名字: {name!r}, 支持类型: {supported}")
+            all_names.append(name)
+            if name == list_name and supported == {"VTODO"}:
+                return calendar
+        if attempt < DISCOVERY_ATTEMPTS:
+            print(f"这次没找到，{DISCOVERY_RETRY_SECONDS} 秒后重试...")
+            time.sleep(DISCOVERY_RETRY_SECONDS)
 
     raise RuntimeError(
-        f"没有找到名字精确匹配 {list_name!r} 且只支持 VTODO 的列表。"
-        f"账号里现有列表: {all_names}"
+        f"重试 {DISCOVERY_ATTEMPTS} 次后，仍没有找到名字精确匹配 {list_name!r} 且只支持 VTODO 的列表。"
+        f"最后一次看到的列表: {all_names}"
     )
 
 
