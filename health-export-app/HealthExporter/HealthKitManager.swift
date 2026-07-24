@@ -29,10 +29,17 @@ final class HealthKitManager: ObservableObject {
         do {
             try await store.requestAuthorization(toShare: [], read: readTypes)
             isAuthorized = true
-            enableBackgroundDelivery()
+            registerBackgroundObservers()
         } catch {
             lastSyncStatus = "授权失败: \(error.localizedDescription)"
         }
+    }
+
+    /// 每次 App 启动都要调用（包括系统在后台静默唤醒的那次），
+    /// 不能只在用户点击授权按钮那一次调用，否则后台唤醒时观察者没有重新注册。
+    /// 对尚未授权的数据类型调用这些方法是无害的空操作，所以可以无条件调用。
+    func registerBackgroundObservers() {
+        enableBackgroundDelivery()
     }
 
     private func enableBackgroundDelivery() {
