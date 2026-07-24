@@ -43,11 +43,19 @@ def find_reminders_list(principal: caldav.Principal, list_name: str) -> caldav.C
     )
 
 
-def create_test_reminder(reminders_list: caldav.Calendar) -> str:
+def create_test_reminder_with_due(reminders_list: caldav.Calendar) -> str:
     due = datetime.now(timezone.utc) + timedelta(hours=1)
     todo = reminders_list.save_todo(
-        summary="HealthExporter Reminders 集成测试",
+        summary="HealthExporter 测试(带截止时间)",
         due=due,
+    )
+    return todo.id
+
+
+def create_test_reminder_no_due(reminders_list: caldav.Calendar) -> str:
+    """完全不带 DUE，只有标题，排查是不是 DUE 字段格式导致官方客户端不认。"""
+    todo = reminders_list.save_todo(
+        summary="HealthExporter 测试(无截止时间)",
     )
     return todo.id
 
@@ -63,8 +71,11 @@ def main() -> None:
     reminders_list = find_reminders_list(principal, list_name)
     print(f"找到提醒事项列表: {reminders_list.get_display_name()}")
 
-    new_uid = create_test_reminder(reminders_list)
-    print(f"测试提醒事项创建成功, uid={new_uid}")
+    uid_with_due = create_test_reminder_with_due(reminders_list)
+    print(f"创建成功(带截止时间), uid={uid_with_due}")
+
+    uid_no_due = create_test_reminder_no_due(reminders_list)
+    print(f"创建成功(无截止时间), uid={uid_no_due}")
 
     print("--- 回头查一次这个列表里的所有待办 ---")
     all_todos = reminders_list.todos(include_completed=True)
