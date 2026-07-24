@@ -1,6 +1,6 @@
 # Reminders/待办自动化 — 设计与规划文档
 
-状态：**已放弃 iCloud CalDAV 方案，改用 Google Tasks，Google Tasks 这条线已验证可行**
+状态：**已验证可行**（Google Tasks 端到端跑通，包括手机端打勾体验）
 
 ## 目标
 
@@ -63,14 +63,14 @@ sequenceDiagram
 
 - `scripts/google_tasks_sync.py` 已实现：读取 access token → 按精确名字查找/创建任务列表 → 创建测试任务 → 回读确认
 - `.github/workflows/google-tasks-sync.yml` 已实现，支持 `workflow_dispatch` 手动触发，可通过 `list_name` 输入覆盖默认任务列表名字，方便调试
-- 待验证：手机 Google Tasks / Google Calendar 上能否正常看到测试任务（Reminders 那次的教训——写入成功不代表客户端真的能看到，需要端到端验证完整闭环）
+- ✅ 已验证：手机 Google Tasks App 上能正常看到测试任务，打勾/日期/完成按钮都是原生体验，端到端闭环确认打通
 
 ## 待实现步骤（Google Tasks 路线）
 
 1. ~~搭建 Google Cloud 项目、OAuth 同意屏幕、Tasks API scope~~ 已完成
 2. ~~本地走一次 OAuth 授权，拿到 refresh token，存进 GitHub Actions Secrets~~ 已完成
 3. ~~写同步脚本 + workflow~~ 已完成
-4. **端到端验证**：手动触发 workflow，确认手机上真的能看到任务（进行中）
+4. ~~端到端验证：手动触发 workflow，确认手机上真的能看到任务~~ 已完成，验证通过
 5. 训练计划的具体内容来源——依赖训练计划本身的数据结构，目前还没定义（目标/器械/身体水平那次访谈还没做），可以先用占位数据跑通技术链路
 6. 决定这个 workflow 跑在哪个分支（建议 `main`，见 [../ARCHITECTURE.md](../ARCHITECTURE.md)）
 7. 观察 Google OAuth refresh token 在"测试"状态下的实际有效期，如遇 7 天过期，评估是否提交验证/发布流程
