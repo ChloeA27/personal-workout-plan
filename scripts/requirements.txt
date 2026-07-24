@@ -1,1 +1,4 @@
 caldav
+google-auth-oauthlib
+google-auth
+requests
